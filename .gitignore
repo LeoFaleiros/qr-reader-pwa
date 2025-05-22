@@ -1,0 +1,19 @@
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# Ambiente virtual Python
+venv/
+env/
+__pycache__/
+
+# Arquivos de IDE
+.vscode/
+.idea/
+
+# Arquivos de ambiente
+.env
+.env.local
+
+# Logs
+*.log

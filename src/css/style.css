@@ -1,0 +1,112 @@
+/* Estilos gerais */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    background-color: #f0f2f5;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header */
+header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+h1 {
+    color: #1a73e8;
+    margin-bottom: 1rem;
+}
+
+/* Seções */
+.section {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Formulário de telefone */
+#phone-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 1rem;
+}
+
+input[type="tel"] {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+button {
+    padding: 10px 20px;
+    background-color: #1a73e8;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button:hover {
+    background-color: #1557b0;
+}
+
+/* Leitor QR Code */
+#reader {
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+#result {
+    margin-top: 1rem;
+    padding: 10px;
+    background-color: #e8f0fe;
+    border-radius: 4px;
+    text-align: center;
+}
+
+/* Histórico */
+#history-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.history-item {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.history-item:last-child {
+    border-bottom: none;
+}
+
+/* Responsividade */
+@media (max-width: 600px) {
+    .container {
+        padding: 10px;
+    }
+
+    #phone-form {
+        flex-direction: column;
+    }
+
+    button {
+        width: 100%;
+    }
+}
