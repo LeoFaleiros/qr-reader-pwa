@@ -1,5 +1,25 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Fundo -->
   <rect width="512" height="512" fill="#1a73e8"/>
-  <rect x="128" y="128" width="256" height="256" stroke="white" stroke-width="24"/>
-  <rect x="176" y="176" width="160" height="160" fill="white"/>
+    
+    <!-- QR Code estilizado -->
+    <!-- Canto superior esquerdo -->
+    <rect x="96" y="96" width="128" height="128" fill="white"/>
+    <rect x="112" y="112" width="96" height="96" fill="#1a73e8"/>
+    <rect x="128" y="128" width="64" height="64" fill="white"/>
+    
+    <!-- Canto superior direito -->
+    <rect x="288" y="96" width="128" height="128" fill="white"/>
+    <rect x="304" y="112" width="96" height="96" fill="#1a73e8"/>
+    <rect x="320" y="128" width="64" height="64" fill="white"/>
+    
+    <!-- Canto inferior esquerdo -->
+    <rect x="96" y="288" width="128" height="128" fill="white"/>
+    <rect x="112" y="304" width="96" height="96" fill="#1a73e8"/>
+    <rect x="128" y="320" width="64" height="64" fill="white"/>
+    
+    <!-- Elementos centrais -->
+    <rect x="288" y="288" width="32" height="32" fill="white"/>
+    <rect x="352" y="288" width="64" height="64" fill="white"/>
+    <rect x="288" y="352" width="64" height="64" fill="white"/>
 </svg>
