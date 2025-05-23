@@ -306,13 +306,13 @@
             <h2>Cadastro de Telefone</h2>
             <form id="phone-form">
                 <div class="phone-input-container">
-                    <input type="text" 
-                           id="phone" 
-                           inputmode="numeric"
-                           placeholder="11999999999"
-                           maxlength="11"
-                           autocomplete="off">
-                    <div class="phone-format-hint">Digite apenas números (DDD + número)</div>
+                   <input type="text" 
+       id="phone" 
+       inputmode="numeric"
+       placeholder="5511999999999"
+       maxlength="13"
+       autocomplete="off">
+<div class="phone-format-hint">Digite o número completo: 55 + DDD + número (13 dígitos)</div>
                 </div>
                 <button type="submit">Salvar</button>
                 <div class="loader" id="loader"></div>
@@ -366,79 +366,85 @@
         }
 
         // Função para enviar mensagem WhatsApp
-        async function sendWhatsAppMessage(phone, qrCode, isEntry) {
-            try {
-                const message = isEntry ? 
-                    `Seu filho acabou de entrar na escola (${new Date().toLocaleString()})` :
-                    `Seu filho acabou de sair da escola (${new Date().toLocaleString()})`;
+         async function sendWhatsAppMessage(phone, qrCode, isEntry) {
+        try {
+            const message = isEntry ? 
+                `Seu filho acabou de entrar na escola (${new Date().toLocaleString()})` :
+                `Seu filho acabou de sair da escola (${new Date().toLocaleString()})`;
 
-                // Remove o 55 se já existir no início do número
-                const cleanPhone = phone.replace(/^55/, '');
-                
-                const response = await fetch(
-                    `${WHATSAPP_API_URL}/${WHATSAPP_PHONE_ID}/messages`,
-                    {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${WHATSAPP_ACCESS_TOKEN}`,
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            messaging_product: "whatsapp",
-                            to: `55${cleanPhone}`,
-                            type: "text",
-                            text: {
-                                body: message
-                            }
-                        })
-                    }
-                );
+            // Garante que o número está no formato correto para o WhatsApp
+            const cleanPhone = phone.replace(/\D/g, ''); // Remove não-dígitos
+            
+            console.log('Enviando mensagem para:', cleanPhone); // Log para debug
 
-                const data = await response.json();
-                console.log('Resposta WhatsApp:', data);
-                
-                if (data.error) {
-                    console.error('Erro na API do WhatsApp:', data.error);
-                    return false;
+            const response = await fetch(
+                `${WHATSAPP_API_URL}/${WHATSAPP_PHONE_ID}/messages`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${WHATSAPP_ACCESS_TOKEN}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        messaging_product: "whatsapp",
+                        to: cleanPhone,
+                        type: "text",
+                        text: {
+                            body: message
+                        }
+                    })
                 }
-                
-                return true;
-            } catch (error) {
-                console.error('Erro ao enviar mensagem:', error);
+            );
+
+            const data = await response.json();
+            console.log('Resposta WhatsApp:', data);
+            
+            if (data.error) {
+                console.error('Erro na API do WhatsApp:', data.error);
                 return false;
             }
+            
+            return true;
+        } catch (error) {
+            console.error('Erro ao enviar mensagem:', error);
+            return false;
         }
+    }
 
-        // Gerenciamento do telefone
-        document.getElementById('phone-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const phoneInput = document.getElementById('phone');
-            const phone = phoneInput.value;
-            const status = document.getElementById('status');
-            const loader = document.getElementById('loader');
-            
-            loader.style.display = 'block';
-            
-            setTimeout(() => {
-                if (phone.length === 11) {
-                    localStorage.setItem('userPhone', phone);
-                    status.textContent = 'Telefone salvo com sucesso!';
-                    status.className = 'success';
-                } else {
-                    status.textContent = 'Digite exatamente 11 números';
-                    status.className = 'error';
-                }
-                loader.style.display = 'none';
-            }, 500);
-        });
-
-        // Garantir apenas números no input
-        document.getElementById('phone').addEventListener('input', function(e) {
-            this.value = this.value.replace(/\D/g, '');
-            if (this.value.length > 11) {
-                this.value = this.value.slice(0, 11);
+    // Atualização do gerenciamento do telefone
+    document.getElementById('phone-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const phoneInput = document.getElementById('phone');
+        const phone = phoneInput.value;
+        const status = document.getElementById('status');
+        const loader = document.getElementById('loader');
+        
+        loader.style.display = 'block';
+        
+        setTimeout(() => {
+            if (phone.length === 13 && phone.startsWith('55')) {
+                localStorage.setItem('userPhone', phone);
+                status.textContent = 'Telefone salvo com sucesso!';
+                status.className = 'success';
+            } else {
+                status.textContent = 'Digite o número completo: 55 + DDD + número (13 dígitos)';
+                status.className = 'error';
             }
-        });
+            loader.style.display = 'none';
+        }, 500);
+    });
+
+    // Atualização do tratamento do input
+    document.getElementById('phone').addEventListener('input', function(e) {
+        this.value = this.value.replace(/\D/g, '');
+        if (this.value.length > 13) {
+            this.value = this.value.slice(0, 13);
+        }
+        // Se o usuário não digitou 55 no início, adiciona automaticamente
+        if (this.value.length > 0 && !this.value.startsWith('55')) {
+            this.value = '55' + this.value;
+        }
+    });
 
         // Verificar QR Code duplicado
         function isQRCodeDuplicate(qrCode) {
