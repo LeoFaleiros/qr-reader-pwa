@@ -12,9 +12,9 @@
     <link rel="icon" type="image/png" href="icons/icon-192x192.png">
     <link rel="apple-touch-icon" href="icons/icon-192x192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="QR Code">
-    <title>Leitor QR Code</title>
     <style>
         :root {
             --primary-color: #1a73e8;
@@ -108,6 +108,15 @@
 
         .print-button:hover {
             background-color: #2d8d47;
+        }
+
+        .clear-button {
+            background-color: #dc3545;
+            margin-left: 10px;
+        }
+
+        .clear-button:hover {
+            background-color: #bb2d3b;
         }
 
         .phone-format-hint {
@@ -297,13 +306,13 @@
             <h2>Cadastro de Telefone</h2>
             <form id="phone-form">
                 <div class="phone-input-container">
-                    <input type="text" 
-                           id="phone" 
-                           inputmode="numeric"
-                           placeholder="11999999999"
-                           maxlength="11"
-                           autocomplete="off">
-                    <div class="phone-format-hint">Digite apenas números (DDD + número)</div>
+                   <input type="text" 
+       id="phone" 
+       inputmode="numeric"
+       placeholder="5511999999999"
+       maxlength="13"
+       autocomplete="off">
+<div class="phone-format-hint">Digite o número completo: 55 + DDD + número (13 dígitos)</div>
                 </div>
                 <button type="submit">Salvar</button>
                 <div class="loader" id="loader"></div>
@@ -325,6 +334,11 @@
 
         <div class="section">
             <h2>Histórico</h2>
+            <div class="button-group">
+                <button onclick="clearHistory()" class="clear-button">
+                    Limpar Histórico
+                </button>
+            </div>
             <div id="history-list"></div>
         </div>
     </div>
@@ -337,53 +351,112 @@
     </div>
 
     <!-- Biblioteca QR Code -->
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     
     <script>
-        // Gerenciamento do telefone
-        document.getElementById('phone-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const phoneInput = document.getElementById('phone');
-            const phone = phoneInput.value;
-            const status = document.getElementById('status');
-            const loader = document.getElementById('loader');
-            
-            loader.style.display = 'block';
-            
-            setTimeout(() => {
-                if (phone.length === 11) {
-                    localStorage.setItem('userPhone', phone);
-                    status.textContent = 'Telefone salvo com sucesso!';
-                    status.className = 'success';
-                } else {
-                    status.textContent = 'Digite exatamente 11 números';
-                    status.className = 'error';
-                }
-                loader.style.display = 'none';
-            }, 500);
-        });
+        // Constantes do WhatsApp
+        const WHATSAPP_API_URL = 'https://graph.facebook.com/v17.0';
+        const WHATSAPP_PHONE_ID = '525149184024678';
+        const WHATSAPP_ACCESS_TOKEN = 'EAATtY8ZBycQoBOwMdFcVUyZAIJ55eKBk76Fx1i305OubOZCSwBZCyAYrP5LE6kguTLzscSz8Q5RhLzlfyhgZAZBwTGjtBWjzyOg6NUm7HcZBcbRZBntHsLqYq4U38evnT2sXjhNhBcChmIQVLbryu0cuGP2ZAAMGuFkoLn9zAlTLZAEQk88QGRpJgO9mDZBixTAMRLMH9QAtmpZB9vcOVap5e2warTS77AZDZD';
 
-        // Garantir apenas números
-        document.getElementById('phone').addEventListener('input', function(e) {
-            this.value = this.value.replace(/\D/g, '');
-            if (this.value.length > 11) {
-                this.value = this.value.slice(0, 11);
+        // Função para limpar histórico
+        function clearHistory() {
+            localStorage.removeItem('qrHistory');
+            displayHistory();
+        }
+
+        // Função para enviar mensagem WhatsApp
+         async function sendWhatsAppMessage(phone, qrCode, isEntry) {
+        try {
+            const message = isEntry ? 
+                `Seu filho acabou de entrar na escola (${new Date().toLocaleString()})` :
+                `Seu filho acabou de sair da escola (${new Date().toLocaleString()})`;
+
+            // Garante que o número está no formato correto para o WhatsApp
+            const cleanPhone = phone.replace(/\D/g, ''); // Remove não-dígitos
+            
+            console.log('Enviando mensagem para:', cleanPhone); // Log para debug
+
+            const response = await fetch(
+                `${WHATSAPP_API_URL}/${WHATSAPP_PHONE_ID}/messages`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${WHATSAPP_ACCESS_TOKEN}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        messaging_product: "whatsapp",
+                        to: cleanPhone,
+                        type: "text",
+                        text: {
+                            body: message
+                        }
+                    })
+                }
+            );
+
+            const data = await response.json();
+            console.log('Resposta WhatsApp:', data);
+            
+            if (data.error) {
+                console.error('Erro na API do WhatsApp:', data.error);
+                return false;
             }
-        });
+            
+            return true;
+        } catch (error) {
+            console.error('Erro ao enviar mensagem:', error);
+            return false;
+        }
+    }
+
+    // Atualização do gerenciamento do telefone
+    document.getElementById('phone-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const phoneInput = document.getElementById('phone');
+        const phone = phoneInput.value;
+        const status = document.getElementById('status');
+        const loader = document.getElementById('loader');
+        
+        loader.style.display = 'block';
+        
+        setTimeout(() => {
+            if (phone.length === 13 && phone.startsWith('55')) {
+                localStorage.setItem('userPhone', phone);
+                status.textContent = 'Telefone salvo com sucesso!';
+                status.className = 'success';
+            } else {
+                status.textContent = 'Digite o número completo: 55 + DDD + número (13 dígitos)';
+                status.className = 'error';
+            }
+            loader.style.display = 'none';
+        }, 500);
+    });
+
+    // Atualização do tratamento do input
+    document.getElementById('phone').addEventListener('input', function(e) {
+        this.value = this.value.replace(/\D/g, '');
+        if (this.value.length > 13) {
+            this.value = this.value.slice(0, 13);
+        }
+        // Se o usuário não digitou 55 no início, adiciona automaticamente
+        if (this.value.length > 0 && !this.value.startsWith('55')) {
+            this.value = '55' + this.value;
+        }
+    });
 
         // Verificar QR Code duplicado
         function isQRCodeDuplicate(qrCode) {
             const history = JSON.parse(localStorage.getItem('qrHistory') || '[]');
             const now = new Date();
             
-            // Procura por leituras do mesmo QR Code
             const lastScan = history.find(entry => entry.qrCode === qrCode);
             
             if (lastScan) {
                 const lastScanTime = new Date(lastScan.timestamp);
-                const diffMinutes = (now - lastScanTime) / (1000 * 60); // Diferença em minutos
+                const diffMinutes = (now - lastScanTime) / (1000 * 60);
                 
-                // Permite nova leitura após 30 minutos
                 if (diffMinutes < 30) {
                     const minutesLeft = Math.ceil(30 - diffMinutes);
                     warning.innerHTML = `
@@ -407,14 +480,15 @@
         }
 
         // Gerenciamento do histórico
-        function addToHistory(qrCode) {
+        function addToHistory(qrCode, isEntry) {
             const history = JSON.parse(localStorage.getItem('qrHistory') || '[]');
             const phone = localStorage.getItem('userPhone');
             
             history.unshift({
                 qrCode,
                 timestamp: new Date().toISOString(),
-                phone
+                phone,
+                type: isEntry ? 'entrada' : 'saída'
             });
             
             localStorage.setItem('qrHistory', JSON.stringify(history.slice(0, 10)));
@@ -428,6 +502,7 @@
                     <div class="qr-code">QR Code: ${entry.qrCode}</div>
                     <div class="timestamp">Data: ${new Date(entry.timestamp).toLocaleString()}</div>
                     <div class="phone">Telefone: ${entry.phone}</div>
+                    <div class="type">Tipo: ${entry.type || 'N/A'}</div>
                 </div>
             `).join('');
             
@@ -435,8 +510,8 @@
                 historyHtml || '<p>Nenhum registro encontrado</p>';
         }
 
-        // Inicialização do leitor QR Code
-        function onScanSuccess(qrCodeMessage) {
+        // Função onScanSuccess atualizada
+        async function onScanSuccess(qrCodeMessage) {
             const result = document.getElementById('result');
             const warning = document.getElementById('warning');
             const actionButtons = document.getElementById('action-buttons');
@@ -447,28 +522,55 @@
                 return;
             }
             
-            // Verifica se o QR Code já foi lido
             if (isQRCodeDuplicate(qrCodeMessage)) {
-                return; // A mensagem de aviso já é mostrada na função isQRCodeDuplicate
+                return;
             }
 
-            // Limpa o aviso se existir
-            warning.innerHTML = '';
-            
-            // Atualiza o resultado
-            result.textContent = `QR Code lido: ${qrCodeMessage}`;
-            result.style.backgroundColor = '#e6f4ea';
-            
-            // Mostra os botões de ação
-            actionButtons.style.display = 'flex';
-            
-            // Adiciona ao histórico
-            addToHistory(qrCodeMessage);
+            // Determinar se é entrada ou saída
+            const now = new Date();
+            const hour = now.getHours();
+            const isEntry = hour < 13; // Antes das 13h considera entrada, depois saída
 
-            // Animação
-            result.style.animation = 'none';
-            result.offsetHeight;
-            result.style.animation = 'fadeIn 0.5s ease';
+            try {
+                // Enviar mensagem WhatsApp
+                const messageSent = await sendWhatsAppMessage(phone, qrCodeMessage, isEntry);
+                
+                // Limpa o aviso se existir
+                warning.innerHTML = '';
+                
+                // Atualiza o resultado
+                result.textContent = `QR Code lido: ${qrCodeMessage}`;
+                result.style.backgroundColor = '#e6f4ea';
+                
+                if (messageSent) {
+                    warning.innerHTML = `
+                        <div style="background-color: #e6f4ea; color: #1e8e3e; padding: 12px; border-radius: 8px; margin-top: 10px;">
+                            Mensagem enviada com sucesso para o WhatsApp!
+                        </div>`;
+                } else {
+                    warning.innerHTML = `
+                        <div style="background-color: #fce8e6; color: #d93025; padding: 12px; border-radius: 8px; margin-top: 10px;">
+                            Erro ao enviar mensagem para o WhatsApp. Tente novamente.
+                        </div>`;
+                }
+                
+                // Mostra os botões de ação
+                actionButtons.style.display = 'flex';
+                
+                // Adiciona ao histórico
+                addToHistory(qrCodeMessage, isEntry);
+
+                // Animação
+                result.style.animation = 'none';
+                result.offsetHeight;
+                result.style.animation = 'fadeIn 0.5s ease';
+            } catch (error) {
+                console.error('Erro:', error);
+                warning.innerHTML = `
+                    <div style="background-color: #fce8e6; color: #d93025; padding: 12px; border-radius: 8px; margin-top: 10px;">
+                        Erro ao processar a leitura. Tente novamente.
+                    </div>`;
+            }
         }
 
         // Configuração do leitor QR Code
@@ -476,11 +578,21 @@
             "reader",
             { 
                 fps: 10,
-                qrbox: { width: 300, height: 300 },
-                aspectRatio: 1.0
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0,
+                formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ],
+                rememberLastUsedCamera: true,
+                showTorchButtonIfSupported: true
             }
         );
-        html5QrcodeScanner.render(onScanSuccess);
+
+        // Tratamento de erros do scanner
+        html5QrcodeScanner.render(onScanSuccess, (error) => {
+            if (error?.message?.includes('NotFound')) {
+                return;
+            }
+            console.warn(`QR Code scanning error: ${error}`);
+        });
 
         // Inicialização
         displayHistory();
